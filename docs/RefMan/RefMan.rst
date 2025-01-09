@@ -6,6 +6,7 @@ Cryptol Reference Manual
   :caption: Cryptol Reference Manual
   :maxdepth: 5
 
+  Installation
   BasicSyntax
   Expressions
   BasicTypes

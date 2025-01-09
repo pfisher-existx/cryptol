@@ -8,8 +8,17 @@ Declarations
 
 .. code-block:: cryptol
 
-  f x = x + y + z
+  double x = x * 2
 
+This line defines a function named ``double`` that takes an input ``x`` and
+returns the result of ``x * 2``.
+
+To run this in the REPL:
+
+.. code-block:: cryptol
+
+  let double x = x * 2
+  double 5 // Returns 10
 
 Type Signatures
 ---------------
@@ -18,17 +27,24 @@ Type Signatures
 
   f,g : {a,b} (fin a) => [a] b
 
+This defines a pair of variables ``f`` and ``g`` that use type variables ``a``
+and ``b``. Type variable ``a`` is constrained to be a finite number and type
+variable ``b`` has no constraints. The type of ``f`` and ``g`` is an 
+``a``-length sequence of type ``b`` elements.
+
+This example cannot be run in the REPL, as it fails due to not having a matching
+binding.
 
 Numeric Constraint Guards
 -------------------------
 
 A declaration with a signature can use *numeric constraint guards*,
-which are used to change the behavior of a functoin depending on its
+which are used to change the behavior of a function depending on its
 numeric type parameters.  For example:
 
 .. code-block:: cryptol
 
-  len : {n} (fin n) => [n]a -> Integer
+  len : {n, a} (fin n) => [n]a -> Integer
   len xs | n == 0 => 0
          | n >  0 => 1 + len (drop `{1} xs)
 
@@ -37,21 +53,24 @@ parameters to a declaration.  When applied, the function will use the first
 definition that satisfies the provided numeric parameters.
 
 Numeric constraint guards are quite similar to an ``if`` expression,
-except that decisions are based on *types* rather than values.  There
-is also an important difference to simply using demotion and an
-actual ``if`` statement:
+except that decisions are based on *types* rather than values, which means the 
+type-checker can make additional constraint assumptions.  There is also an 
+important difference to simply using demotion and an actual ``if`` statement:
 
 .. code-block:: cryptol
   
-  len' : {n} (fin n) => [n]a -> Integer
-  len' xs = if `n == 0 => 0
-             | `n >  0 => 1 + len (drop `{1} xs)
+  len' : {n, a} (fin n) => [n]a -> Integer
+  len' xs = if `n == 0 then 0
+             | `n >  0 then 1 + len (drop `{1} xs)
+             else -1
 
 The definition of ``len'`` is rejected, because the *value based* ``if``
 expression does provide the *type based* fact ``n >= 1`` which is
-required by ``drop `{1} xs``, while in ``len``, the type-checker
-locally-assumes the constraint ``n > 0`` in that constraint-guarded branch
-and so it can in fact determine that ``n >= 1``.
+required by ``drop `{1} xs``, but this cannot be proven because ``n`` has been 
+demoted to a value. In ``len``, the type-checker locally-assumes the constraint
+``n > 0`` (provided by the type-checker as ``n`` is the length of a sequence and
+therefore cannot be a negative number) in that constraint-guarded branch and so
+it can in fact determine that ``n >= 1``.
 
 Requirements:
   - Numeric constraint guards only support constraints over numeric literals,
